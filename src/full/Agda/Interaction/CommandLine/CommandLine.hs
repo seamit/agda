@@ -28,7 +28,7 @@ import Agda.TypeChecking.Reduce
 import Agda.TypeChecking.Errors
 import Agda.TypeChecking.Substitute
 
-import Agda.Utils.Monad
+import Agda.Utils.Read
 
 #include "../../undefined.h"
 import Agda.Utils.Impossible
@@ -131,14 +131,16 @@ showConstraints _ = liftIO $ putStrLn ":constraints [cid]"
 
 showMetas :: [String] -> TCM ()
 showMetas [m] =
-    do	i <- InteractionId <$> readM m
+    do	i <- either (throwError . Exception noRange) (return . InteractionId) 
+                $ readEither m
 	withInteractionId i $ do
 	  s <- typeOfMeta AsIs i
 	  r <- getInteractionRange i
 	  d <- showA s
 	  liftIO $ putStrLn $ d ++ " " ++ show r
 showMetas [m,"normal"] =
-    do	i <- InteractionId <$> readM m
+    do	i <- either (throwError . Exception noRange) (return . InteractionId) 
+                $ readEither m
 	withInteractionId i $ do
 	  s <- showA =<< typeOfMeta Normalised i
 	  r <- getInteractionRange i
@@ -183,10 +185,10 @@ metaParseExpr ii s =
 
 actOnMeta :: [String] -> (InteractionId -> A.Expr -> TCM a) -> TCM a
 actOnMeta (is:es) f =
-     do  i <- readM is
-         let ii = InteractionId i
-         e <- metaParseExpr ii (unwords es)
-         withInteractionId ii $ f ii e
+     do  i <- either (throwError . Exception noRange) (return . InteractionId) 
+                $ readEither is
+         e <- metaParseExpr i (unwords es)
+         withInteractionId i $ f i e
 actOnMeta _ _ = __IMPOSSIBLE__
 
 
@@ -252,7 +254,8 @@ typeIn _ = liftIO $ putStrLn ":typeIn meta expr"
 
 showContext :: [String] -> TCM ()
 showContext (meta:args) = do
-    i <- InteractionId <$> readM meta
+    i <- either (throwError . Exception noRange) (return . InteractionId) 
+            $ readEither meta
     mi <- lookupMeta =<< lookupInteractionId i
     withMetaInfo (getMetaInfo mi) $ do
     ctx <- List.map unDom . telToList <$> getContextTelescope

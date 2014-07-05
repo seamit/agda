@@ -343,6 +343,7 @@ library
                     Agda.Utils.Pointed
                     Agda.Utils.Pretty
                     Agda.Utils.QuickCheck
+                    Agda.Utils.Read
                     Agda.Utils.ReadP
                     Agda.Utils.SemiRing
                     Agda.Utils.Size

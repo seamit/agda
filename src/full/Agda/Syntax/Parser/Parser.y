@@ -20,6 +20,7 @@ module Agda.Syntax.Parser.Parser (
     ) where
 
 import Control.Monad
+import Control.Applicative
 import Data.Char
 import Data.List
 import Data.Maybe
@@ -39,7 +40,7 @@ import Agda.Syntax.Literal
 
 import Agda.Utils.Hash
 import Agda.Utils.List (spanJust)
-import Agda.Utils.Monad
+import Agda.Utils.Read
 import Agda.Utils.QuickCheck
 import Agda.Utils.TestHelpers
 import Agda.Utils.Tuple
@@ -318,10 +319,7 @@ Int : literal	{% case $1 of {
 		   }
 		}
    | id	{% case $1 of {
-             (_, s) -> case readM s of {
-                         Right i  -> return i;
-		         Left (err :: String) -> fail $ "Expected integer"
-		       }
+             (_, s) -> maybe (fail "Expected integer") return $ readMaybe s 
            }
         }
 

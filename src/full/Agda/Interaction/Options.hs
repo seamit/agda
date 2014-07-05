@@ -41,7 +41,7 @@ import Agda.Termination.CutOff  ( CutOff(..) )
 import Agda.Utils.TestHelpers   ( runTests )
 import Agda.Utils.QuickCheck    ( quickCheck' )
 import Agda.Utils.FileName      ( AbsolutePath )
-import Agda.Utils.Monad		( readM )
+import Agda.Utils.Read		    ( readMaybe )
 import Agda.Utils.List          ( wordsBy )
 import Agda.Utils.String        ( indent )
 import Agda.Utils.Trie          ( Trie )
@@ -340,20 +340,19 @@ verboseFlag s o =
     parseVerbose s = case wordsBy (`elem` ":.") s of
       []  -> usage
       ss  -> do
-        n <- readM (last ss) `catchError` \_ -> usage
+        n <- maybe usage return $ readMaybe (last ss) 
         return (init ss, n)
     usage = throwError "argument to verbose should be on the form x.y.z:N or N"
 
 terminationDepthFlag s o =
-    do k <- readM s `catchError` \_ -> usage
+    do k <- maybe usage return $ readMaybe s 
        when (k < 1) $ usage -- or: turn termination checking off for 0
        return $ o { optTerminationDepth = CutOff $ k-1 }
     where usage = throwError "argument to termination-depth should be >= 1"
 
 integerArgument :: String -> String -> Either String Int
-integerArgument flag s =
-    readM s `catchError` \_ ->
-        throwError $ "option '" ++ flag ++ "' requires an integer argument"
+integerArgument flag s = maybe usage Right $ readMaybe s
+    where usage = throwError $ "option '" ++ flag ++ "' requires an integer argument"
 
 standardOptions :: [OptDescr (Flag CommandLineOptions)]
 standardOptions =
