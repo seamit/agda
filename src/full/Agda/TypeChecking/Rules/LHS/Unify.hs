@@ -16,7 +16,7 @@ import Control.Arrow ((***))
 import Control.Applicative hiding (empty)
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Writer (WriterT(..), MonadWriter(..), Monoid(..))
 
 import Data.Map (Map)
@@ -35,7 +35,6 @@ import Agda.Syntax.Literal
 import Agda.Syntax.Position
 
 import Agda.TypeChecking.Monad
-import Agda.TypeChecking.Monad.Exception
 import Agda.TypeChecking.Monad.Builtin (constructorForm)
 import Agda.TypeChecking.Conversion -- equalTerm
 import Agda.TypeChecking.Constraints
@@ -62,8 +61,8 @@ import Agda.Utils.Monad
 #include "../../../undefined.h"
 import Agda.Utils.Impossible
 
-newtype Unify a = U { unUnify :: ReaderT UnifyEnv (WriterT UnifyOutput (ExceptionT UnifyException (StateT UnifyState TCM))) a }
-  deriving (Monad, MonadIO, Functor, Applicative, MonadException UnifyException, MonadWriter UnifyOutput)
+newtype Unify a = U { unUnify :: ReaderT UnifyEnv (WriterT UnifyOutput (ExceptT UnifyException (StateT UnifyState TCM))) a }
+  deriving (Monad, MonadIO, Functor, Applicative, MonadError UnifyException, MonadWriter UnifyOutput)
 
 instance MonadTCM Unify where
   liftTCM = U . lift . lift . lift . lift
@@ -130,10 +129,6 @@ data UnifyException
   | WithoutKException Type Term Term
   | GenericUnifyException String
 
-instance Error UnifyException where
-  noMsg  = strMsg ""
-  strMsg = GenericUnifyException
-
 data UnifyState = USt { uniSub	  :: Sub
 		      , uniConstr :: [Equality]
 		      }
@@ -142,11 +137,11 @@ emptyUState = USt Map.empty []
 
 -- | Throw-away error message.
 projectionMismatch :: QName -> QName -> Unify a
-projectionMismatch f f' = throwException $ GenericUnifyException $
+projectionMismatch f f' = throwError $ GenericUnifyException $
   "projections " ++ show f ++ " and " ++ show f' ++ " do not match"
 
 constructorMismatch :: Type -> Term -> Term -> Unify a
-constructorMismatch a u v = throwException $ ConstructorMismatch a u v
+constructorMismatch a u v = throwError $ ConstructorMismatch a u v
 
 constructorMismatchHH :: TypeHH -> Term -> Term -> Unify a
 constructorMismatchHH aHH = constructorMismatch (leftHH aHH)
@@ -191,7 +186,7 @@ checkEqualityHH (Hom a) u v = do
     -- Jesper, 2013-11-21: Refuse to solve reflexive equations when --without-K is enabled
     if ok
       then (whenM (liftTCM $ optWithoutK <$> pragmaOptions)
-           (throwException $ WithoutKException a u v))
+           (throwError $ WithoutKException a u v))
       else (addEquality a u v)
 checkEqualityHH aHH@(Het a1 a2) u v = -- reportPostponing -- enter "dirty" mode
     addEqualityHH aHH u v -- postpone, enter "dirty" mode
@@ -232,14 +227,14 @@ occursCheck i u a = do
     -- a strongly rigid recursive occurrences signals unsolvability
     StronglyRigid -> do
       liftTCM $ reportSDoc "tc.lhs.unify" 20 $ prettyTCM v <+> text "occurs strongly rigidly in" <+> prettyTCM u
-      throwException $ StronglyRigidOccurrence a v u
+      throwError $ StronglyRigidOccurrence a v u
 
     NoOccurrence  -> return ()  -- this includes irrelevant occurrences!
 
     -- any other recursive occurrence leads to unclear situation
     _             -> do
       liftTCM $ reportSDoc "tc.lhs.unify" 20 $ prettyTCM v <+> text "occurs in" <+> prettyTCM u
-      throwException $ UnclearOccurrence a v u
+      throwError $ UnclearOccurrence a v u
 
 -- | Assignment with preceding occurs check.
 (|->) :: Nat -> (Term, Type) -> Unify ()
@@ -467,7 +462,7 @@ unifyIndices flex a us vs = liftTCM $ do
           , nest 2 $ prettyList $ map prettyTCM vs
           , nest 2 $ text "context: " <+> (prettyTCM =<< getContextTelescope)
           ]
-    (r, USt s eqs) <- flip runStateT emptyUState . runExceptionT . runWriterT . flip runReaderT emptyUEnv . unUnify $ do
+    (r, USt s eqs) <- flip runStateT emptyUState . runExceptT . runWriterT . flip runReaderT emptyUEnv . unUnify $ do
         ifClean (unifyConstructorArgs (Hom a) us vs)
           -- clean: continue unifying
           recheckConstraints
@@ -653,10 +648,10 @@ unifyIndices flex a us vs = liftTCM $ do
       i |-> x
       recheckConstraints
 
-    maybeAssign h i x = (i |->> x) `catchException` \e ->
+    maybeAssign h i x = (i |->> x) `catchError` \e ->
       case e of
         UnclearOccurrence{} -> h
-        _                   -> throwException e
+        _                   -> throwError e
 
     unifySizes :: Term -> Term -> Unify ()
     unifySizes u v = do
@@ -802,7 +797,7 @@ unifyIndices flex a us vs = liftTCM $ do
                     _          -> False
               inj <- liftTCM $ optInjectiveTypeConstructors <$> pragmaOptions
               if inj && ok
-                then unifyElims (defType def) us vs `catchException` \ _ ->
+                then unifyElims (defType def) us vs `catchError` \ _ ->
                        constructorMismatchHH aHH u v
                 else checkEqualityHH aHH u v
           -- Andreas, 2011-05-30: if heads disagree, abort

@@ -21,6 +21,7 @@ import qualified Control.Concurrent as C
 import Control.DeepSeq
 import Control.Exception as E
 import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Writer
@@ -1721,6 +1722,9 @@ instance MonadTCM tcm => MonadTCM (MaybeT tcm) where
   liftTCM = lift . liftTCM
 
 instance (Error err, MonadTCM tcm) => MonadTCM (ErrorT err tcm) where
+  liftTCM = lift . liftTCM
+
+instance MonadTCM tcm => MonadTCM (ExceptT err tcm) where
   liftTCM = lift . liftTCM
 
 instance (Monoid w, MonadTCM tcm) => MonadTCM (WriterT w tcm) where

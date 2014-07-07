@@ -6,7 +6,7 @@
 module Agda.TypeChecking.Coverage where
 
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Applicative
 import Data.List
 import qualified Data.Set as Set
@@ -24,7 +24,6 @@ import Agda.TypeChecking.Monad.Closure
 import Agda.TypeChecking.Monad.Trace
 import Agda.TypeChecking.Monad.Signature
 import Agda.TypeChecking.Monad.Options
-import Agda.TypeChecking.Monad.Exception
 import Agda.TypeChecking.Monad.Context
 
 import Agda.TypeChecking.Rules.LHS.Problem (FlexibleVar(..),flexibleVarFromHiding)
@@ -86,7 +85,7 @@ clauseToSplitClause cl = SClause
   , scTarget = clauseType cl
   }
 
-type CoverM = ExceptionT SplitError TCM
+type CoverM = ExceptT SplitError TCM
 
 {- UNUSED
 typeOfVar :: Telescope -> Nat -> Dom Type
@@ -260,12 +259,12 @@ splitStrategy bs tel = return $ updateLast (mapSnd (const Nothing)) xs
 -- | Check that a type is a non-irrelevant datatype or a record with
 -- named constructor. Unless the 'Induction' argument is 'CoInductive'
 -- the data type must be inductive.
-isDatatype :: (MonadTCM tcm, MonadException SplitError tcm) =>
+isDatatype :: (MonadTCM tcm, MonadError SplitError tcm) =>
               Induction -> Dom Type ->
               tcm (QName, [Arg Term], [Arg Term], [QName])
 isDatatype ind at = do
   let t       = unDom at
-      throw f = throwException . f =<< do liftTCM $ buildClosure t
+      throw f = throwError . f =<< do liftTCM $ buildClosure t
   t' <- liftTCM $ reduce t
   case ignoreSharing $ unEl t' of
     Def d es -> do
@@ -389,7 +388,7 @@ computeNeighbourhood delta1 n delta2 perm d pars ixs hix hps c = do
       return Nothing
     DontKnow _    -> do
       debugCantSplit
-      throwException $ CantSplit (conName con) (delta1 `abstract` gamma) conIxs givenIxs
+      throwError $ CantSplit (conName con) (delta1 `abstract` gamma) conIxs givenIxs
                                  (map (var . flexVar) flex)
     Unifies sub   -> do
       debugSubst "sub" sub
@@ -548,7 +547,7 @@ split' :: Induction
        -> SplitClause
        -> BlockingVar
        -> TCM (Either SplitError (Either SplitClause Covering))
-split' ind sc@(SClause tel perm ps _ target) (x, mcons) = liftTCM $ runExceptionT $ do
+split' ind sc@(SClause tel perm ps _ target) (x, mcons) = liftTCM $ runExceptT $ do
 
   debugInit tel perm x ps
 
@@ -601,7 +600,7 @@ split' ind sc@(SClause tel perm ps _ target) (x, mcons) = liftTCM $ runException
     -- if more than one constructor matches, we cannot be irrelevant
     -- (this piece of code is unreachable if --experimental-irrelevance is off)
     (_ : _ : _) | unusableRelevance (getRelevance t) ->
-      throwException . IrrelevantDatatype =<< do liftTCM $ buildClosure (unDom t)
+      throwError . IrrelevantDatatype =<< do liftTCM $ buildClosure (unDom t)
 
   -- Andreas, 2012-10-10 fail if precomputed constructor set does not cover
   -- all the data type constructors
@@ -615,7 +614,7 @@ split' ind sc@(SClause tel perm ps _ target) (x, mcons) = liftTCM $ runException
             [ hsep $ text "pcons =" : map prettyTCM pcons
             , hsep $ text "cons  =" : map prettyTCM cons
             ]
-          throwException (GenericSplitError "precomputed set of constructors does not cover all cases")
+          throwError (GenericSplitError "precomputed set of constructors does not cover all cases")
 
     _  -> return $ Right $ Covering xDBLevel ns
 
