@@ -8,7 +8,7 @@ module Agda.Interaction.Imports where
 
 import Prelude
 
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Control.Exception as E

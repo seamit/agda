@@ -26,7 +26,7 @@ import qualified Control.Exception as E
 import Control.Monad
 import Control.Monad.Reader
 import Control.Monad.State.Strict
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Array.IArray
 import Data.Word
 import Data.ByteString.Lazy as L
@@ -149,7 +149,7 @@ type S a = ReaderT Dict IO a
 -- 'TCM' is not used because the associated overheads would make
 -- decoding slower.
 
-type R a = ErrorT TypeError (StateT St IO) a
+type R a = ExceptT TypeError (StateT St IO) a
 
 -- | Throws an error which is suitable when the data stream is
 -- malformed.
@@ -245,7 +245,7 @@ decode s = do
         st <- St (ar nL) (ar sL) (ar iL) (ar dL)
                 <$> liftIO H.new
                 <*> return mf <*> return incs
-        (r, st) <- runStateT (runErrorT (value r)) st
+        (r, st) <- runStateT (runExceptT (value r)) st
         return (Just (modFile st), r)
 
   case mf of

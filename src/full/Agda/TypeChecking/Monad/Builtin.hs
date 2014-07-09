@@ -3,7 +3,7 @@
 module Agda.TypeChecking.Monad.Builtin where
 
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.State
 
 import Data.Functor

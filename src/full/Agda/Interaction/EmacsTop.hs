@@ -6,7 +6,7 @@ module Agda.Interaction.EmacsTop
     ( mimicGHCi
     ) where
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.State
 
 import Data.Char

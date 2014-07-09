@@ -5,7 +5,7 @@ module Agda.Interaction.Monad where
 import Agda.TypeChecking.Monad
 
 import Control.Monad.Trans
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import System.Console.Haskeline
 
 -- | Interaction monad.

@@ -9,7 +9,7 @@
 module Agda.TypeChecking.Monad.SizedTypes where
 
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 
 import Agda.Interaction.Options
 

@@ -5,7 +5,7 @@
 module Agda.Main where
 
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Applicative
 
 import qualified Data.List as List

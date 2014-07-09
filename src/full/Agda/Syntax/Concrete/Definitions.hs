@@ -15,7 +15,7 @@ module Agda.Syntax.Concrete.Definitions
 
 import Control.Arrow ((***))
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.State
 
 import Data.Typeable (Typeable)
@@ -158,10 +158,6 @@ instance HasRange NiceDeclaration where
   getRange (NicePatternSyn r _ _ _ _)      = r
   getRange (NiceFunClause r _ _ _ _)       = r
   getRange (NiceUnquoteDecl r _ _ _ _ _ _) = r
-
-instance Error DeclarationException where
-  noMsg  = strMsg ""
-  strMsg = DeclarationPanic
 
 instance Show DeclarationException where
   show (MultipleFixityDecls xs) = show $

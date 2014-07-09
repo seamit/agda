@@ -8,7 +8,7 @@
 module Agda.TypeChecking.MetaVars where
 
 import Control.Monad.Reader
-import Control.Monad.Error
+import Control.Monad.Except
 
 import Data.Function
 import Data.List hiding (sort)
@@ -646,7 +646,7 @@ assign dir x args v = do
 
 	-- Check that the arguments are variables
 	ids <- do
-          res <- runErrorT $ inverseSubst args
+          res <- runExceptT $ inverseSubst args
           case res of
             -- all args are variables
             Right ids -> do
@@ -664,7 +664,7 @@ assign dir x args v = do
 
         -- Check linearity
         ids <- do
-          res <- runErrorT $ checkLinearity {- (`Set.member` fvs) -} ids
+          res <- runExceptT $ checkLinearity {- (`Set.member` fvs) -} ids
           case res of
             -- case: linear
             Right ids -> return ids
@@ -673,7 +673,7 @@ assign dir x args v = do
 
 {- UNNECESSARILY COMPLICATED:
         ids <- do
-          res <- runErrorT $ runWriterT $ checkLinearity (`Set.member` fvs) ids
+          res <- runExceptT $ runWriterT $ checkLinearity (`Set.member` fvs) ids
           case res of
             -- case: linear
             Right (ids, []) -> return ids
@@ -827,9 +827,6 @@ class NoProjectedVar a where
 
 data ProjVarExc = ProjVarExc Int [QName]
 
-instance Error ProjVarExc where
-  noMsg = __IMPOSSIBLE__
-
 instance NoProjectedVar Term where
   noProjectedVar (Var i es) | Just qs@(_:_) <- mapM isProjElim es = Left $ ProjVarExc i qs
   noProjectedVar _ = return ()
@@ -898,7 +895,7 @@ type SubstCand = [(Nat,Term)] -- ^ a possibly non-deterministic substitution
 
 -- | Turn non-det substitution into proper substitution, if possible.
 --   Otherwise, raise the error.
-checkLinearity :: SubstCand -> ErrorT () TCM SubstCand
+checkLinearity :: SubstCand -> ExceptT () TCM SubstCand
 checkLinearity ids0 = do
   let ids = sortBy (compare `on` fst) ids0  -- see issue 920
   let grps = groupOn fst ids
@@ -906,7 +903,7 @@ checkLinearity ids0 = do
   where
     -- | Non-determinism can be healed if type is singleton. [Issue 593]
     --   (Same as for irrelevance.)
-    makeLinear :: SubstCand -> ErrorT () TCM SubstCand
+    makeLinear :: SubstCand -> ExceptT () TCM SubstCand
     makeLinear []            = __IMPOSSIBLE__
     makeLinear grp@[_]       = return grp
     makeLinear (p@(i,t) : _) =
@@ -919,7 +916,7 @@ checkLinearity ids0 = do
 --   Writes a list of non-linear variables that need to be pruned.
 --   If a non-linear variable is @elemFVs@, hence, not prunable,
 --   the error is thrown.
-checkLinearity :: (Nat -> Bool) -> SubstCand -> ErrorT () (WriterT [Nat] TCM) SubstCand
+checkLinearity :: (Nat -> Bool) -> SubstCand -> ExceptT () (WriterT [Nat] TCM) SubstCand
 checkLinearity elemFVs ids0 = do
   let ids = sortBy (compare `on` fst) ids0
   let grps = groupOn fst ids
@@ -927,7 +924,7 @@ checkLinearity elemFVs ids0 = do
   where
     -- | Non-determinism can be healed if type is singleton. [Issue 593]
     --   (Same as for irrelevance.)
-    makeLinear :: SubstCand -> ErrorT () TCM SubstCand
+    makeLinear :: SubstCand -> ExceptT () TCM SubstCand
     makeLinear []                = __IMPOSSIBLE__
     makeLinear grp@[_]           = return grp
     makeLinear grp@(p@(i,t) : _) = do
@@ -948,9 +945,6 @@ data InvertExcept
   | NeutralArg                -- ^ A neutral arg: can't invert, but maybe prune.
   | ProjectedVar Int [QName]  -- ^ Try to eta-expand var to remove projs.
 
-instance Error InvertExcept where
-  noMsg = CantInvert
-
 -- | Check that arguments @args@ to a metavar are in pattern fragment.
 --   Assumes all arguments already in whnf and eta-reduced.
 --   Parameters are represented as @Var@s so @checkArgs@ really
@@ -962,7 +956,7 @@ instance Error InvertExcept where
 --   Linearity, i.e., whether the substitution is deterministic,
 --   has to be checked separately.
 --
-inverseSubst :: Args -> ErrorT InvertExcept TCM SubstCand
+inverseSubst :: Args -> ExceptT InvertExcept TCM SubstCand
 inverseSubst args = map (mapFst unArg) <$> loop (zip args terms)
   where
     loop  = foldM isVarOrIrrelevant []
@@ -974,7 +968,7 @@ inverseSubst args = map (mapFst unArg) <$> loop (zip args terms)
       throwError CantInvert
     neutralArg = throwError NeutralArg
 
-    isVarOrIrrelevant :: Res -> (I.Arg Term, Term) -> ErrorT InvertExcept TCM Res
+    isVarOrIrrelevant :: Res -> (I.Arg Term, Term) -> ExceptT InvertExcept TCM Res
     isVarOrIrrelevant vars (arg, t) =
       case ignoreSharing <$> arg of
         -- i := x

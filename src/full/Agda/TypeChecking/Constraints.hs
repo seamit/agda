@@ -4,7 +4,7 @@ module Agda.TypeChecking.Constraints where
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Applicative
 import Data.List as List
 

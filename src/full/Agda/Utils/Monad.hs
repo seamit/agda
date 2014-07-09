@@ -11,7 +11,7 @@ module Agda.Utils.Monad
 
 import Prelude		   hiding (concat)
 import Control.Monad       hiding (mapM, forM)
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Applicative
@@ -119,14 +119,10 @@ dropWhileM p (x : xs) = ifM (p x) (dropWhileM p xs) (return (x : xs))
 
 -- Error monad ------------------------------------------------------------
 
--- | To simulate @MaybeT@ by @'ErrorT'@.
-instance Error () where
-  noMsg = ()
-
 -- | Finally for the 'Error' class. Errors in the finally part take
 -- precedence over prior errors.
 
-finally :: (Error e, MonadError e m) => m a -> m b -> m a
+finally :: (MonadError e m) => m a -> m b -> m a
 first `finally` after = do
   r <- catchError (liftM Right first) (return . Left)
   after
@@ -136,7 +132,7 @@ first `finally` after = do
 
 -- | Bracket for the 'Error' class.
 
-bracket :: (Error e, MonadError e m)
+bracket :: (MonadError e m)
         => m a         -- ^ Acquires resource. Run first.
         -> (a -> m c)  -- ^ Releases resource. Run last.
         -> (a -> m b)  -- ^ Computes result. Run in-between.

@@ -6,7 +6,6 @@
 
 module Agda.TypeChecking.Rules.LHS.Problem where
 
-import Control.Monad.Error
 import Data.Monoid ( Monoid(mappend,mempty) )
 import Data.Foldable
 import Data.Traversable
@@ -178,10 +177,6 @@ instance PrettyTCM AsBinding where
     sep [ prettyTCM x <> text "@" <> parens (prettyTCM v)
         , nest 2 $ text ":" <+> prettyTCM a
         ]
-
-instance Error SplitError where
-  noMsg  = NothingToSplit
-  strMsg = SplitPanic
 
 -- | 'ProblemRest' is a right dominant monoid.
 --   @pr1 \`mappend\` pr2 = pr2@ unless @pr2 = mempty@, then it is @pr1@.

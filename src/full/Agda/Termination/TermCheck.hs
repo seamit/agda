@@ -21,7 +21,6 @@ module Agda.Termination.TermCheck
     ) where
 
 import Control.Applicative
-import Control.Monad.Error
 import Control.Monad.State
 
 import Data.List as List

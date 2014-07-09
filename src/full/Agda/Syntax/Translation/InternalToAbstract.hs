@@ -29,7 +29,7 @@ import Prelude hiding (mapM_, mapM)
 import Control.Applicative
 import Control.Arrow
 import Control.Monad.State hiding (mapM_, mapM)
-import Control.Monad.Error hiding (mapM_, mapM)
+import Control.Monad.Error.Class
 import Control.Monad.Reader hiding (mapM_, mapM)
 
 import qualified Data.Set as Set

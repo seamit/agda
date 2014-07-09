@@ -9,7 +9,7 @@ module Agda.TypeChecking.Monad.Open
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Data.List
 
 import Agda.TypeChecking.Substitute

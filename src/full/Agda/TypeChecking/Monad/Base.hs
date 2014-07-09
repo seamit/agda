@@ -20,7 +20,6 @@ import Control.Arrow ((***), first, second)
 import qualified Control.Concurrent as C
 import Control.DeepSeq
 import Control.Exception as E
-import Control.Monad.Error
 import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Reader
@@ -1394,10 +1393,6 @@ data SplitError = NotADatatype (Closure Type) -- ^ neither data type nor record
                 | GenericSplitError String
   deriving (Show)
 
-instance Error SplitError where
-  noMsg  = strMsg ""
-  strMsg = GenericSplitError
-
 data TypeError
 	= InternalError String
 	| NotImplemented String
@@ -1591,10 +1586,6 @@ data LHSOrPatSyn = IsLHS | IsPatSyn deriving (Eq, Show)
 -- instance Show TypeError where
 --   show _ = "<TypeError>" -- TODO: more info?
 
-instance Error TypeError where
-    noMsg  = strMsg ""
-    strMsg = GenericError
-
 -- | Type-checking errors.
 
 data TCErr = TypeError TCState (Closure TypeError)
@@ -1603,10 +1594,6 @@ data TCErr = TypeError TCState (Closure TypeError)
 	   | PatternErr  TCState -- ^ for pattern violations
 	   {- AbortAssign TCState -- ^ used to abort assignment to meta when there are instantiations -- UNUSED -}
   deriving (Typeable)
-
-instance Error TCErr where
-    noMsg  = strMsg ""
-    strMsg = Exception noRange . strMsg
 
 instance Show TCErr where
     show (TypeError _ e) = show (envRange $ clEnv e) ++ ": " ++ show (clValue e)
@@ -1719,9 +1706,6 @@ instance MonadIO m => MonadTCM (TCMT m) where
     liftTCM = mapTCMT liftIO
 
 instance MonadTCM tcm => MonadTCM (MaybeT tcm) where
-  liftTCM = lift . liftTCM
-
-instance (Error err, MonadTCM tcm) => MonadTCM (ErrorT err tcm) where
   liftTCM = lift . liftTCM
 
 instance MonadTCM tcm => MonadTCM (ExceptT err tcm) where

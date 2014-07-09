@@ -2,7 +2,7 @@
 
 module Agda.Interaction.CommandLine.CommandLine where
 
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.Reader
 import Control.Applicative
 import Data.List as List

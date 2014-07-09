@@ -30,7 +30,7 @@ module Agda.Syntax.Translation.ConcreteToAbstract
 import Prelude hiding (mapM)
 import Control.Applicative
 import Control.Monad.Reader hiding (mapM)
-import Control.Monad.Error hiding (mapM)
+import Control.Monad.Error.Class
 
 import Data.Foldable (Foldable, traverse_)
 import Data.Traversable (mapM, traverse)

@@ -5,7 +5,7 @@ module Agda.Syntax.Notation where
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Error (throwError)
+import Control.Monad.Error.Class (throwError)
 import Data.List
 import Data.Maybe
 import Data.Typeable (Typeable)

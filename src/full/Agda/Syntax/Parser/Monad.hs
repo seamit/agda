@@ -33,7 +33,7 @@ import Data.Int
 import Data.Typeable
 
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Applicative
 
 import Agda.Syntax.Position

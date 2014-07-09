@@ -9,7 +9,7 @@ module Agda.Interaction.BasicOps where
 
 import Control.Arrow ((***), first, second)
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Identity
@@ -151,7 +151,7 @@ refine ii mr e = do
     tryRefine nrOfMetas r scope e = try nrOfMetas e
       where
         try :: Int -> Expr -> TCM Expr
-        try 0 e = throwError (strMsg "Can not refine")
+        try 0 e = throwError (Exception noRange "Can not refine")
         try n e = give ii (Just r) e `catchError` (\_ -> try (n-1) =<< appMeta e)
 
         -- Apply A.Expr to a new meta

@@ -7,7 +7,7 @@ import Prelude hiding (mapM)
 import Control.Arrow ((***))
 import Control.Applicative
 import Control.Monad.State hiding (forM, mapM)
-import Control.Monad.Error hiding (forM, mapM)
+import Control.Monad.Error.Class 
 
 import Data.Function
 import Data.List hiding (sort)

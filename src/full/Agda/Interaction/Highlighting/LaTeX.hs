@@ -13,7 +13,7 @@ import Data.Char
 import Data.Maybe
 import Data.Function
 import Control.Monad.RWS
-import Control.Monad.Error
+import Control.Monad.Except
 import System.Directory
 import System.FilePath
 import Data.Text (Text)
@@ -42,12 +42,12 @@ import Agda.Utils.Impossible
 ------------------------------------------------------------------------
 -- * Datatypes.
 
--- | The @LaTeX@ monad is a combination of @ErrorT@, @RWST@ and
+-- | The @LaTeX@ monad is a combination of @ExceptT@, @RWST@ and
 -- @IO@. The error part is just used to keep track whether we finished
 -- or not, the reader part isn't used, the writer is where the output
 -- goes and the state is for keeping track of the tokens and some other
 -- useful info, and the I/O part is used for printing debugging info.
-type LaTeX = ErrorT String (RWST () Text State IO)
+type LaTeX = ExceptT String (RWST () Text State IO)
 
 data State = State
   { tokens     :: Tokens
@@ -75,7 +75,7 @@ data Debug = MoveColumn | NonCode | Code | Spaces | Output
 
 -- | Run function for the @LaTeX@ monad.
 runLaTeX :: LaTeX a -> () -> State -> IO (Either String a, State, Text)
-runLaTeX = runRWST . runErrorT
+runLaTeX = runRWST . runExceptT
 
 emptyState :: State
 emptyState = State

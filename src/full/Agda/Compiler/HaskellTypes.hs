@@ -6,7 +6,7 @@
 module Agda.Compiler.HaskellTypes where
 
 import Control.Applicative
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Data.Maybe (fromMaybe)
 
 import Agda.Syntax.Common

@@ -19,7 +19,7 @@ module Agda.Interaction.InteractionTop
 import Control.Applicative hiding (empty)
 import qualified Control.Exception as E
 import Control.Monad.Identity
-import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 
@@ -394,7 +394,7 @@ data IOTCM' range
 -- | The 'Parse' monad.
 --   'StateT' state holds the remaining input.
 
-type Parse a = ErrorT String (StateT String Identity) a
+type Parse a = ExceptT String (StateT String Identity) a
 
 -- | Converter from the type of 'reads' to 'Parse'
 --   The first paramter is part of the error message
@@ -410,7 +410,7 @@ readsToParse s f = do
             return a
 
 parseToReadsPrec :: Parse a -> Int -> String -> [(a, String)]
-parseToReadsPrec p i s = case runIdentity . flip runStateT s . runErrorT $ parens' p of
+parseToReadsPrec p i s = case runIdentity . flip runStateT s . runExceptT $ parens' p of
     (Right a, s) -> [(a,s)]
     _ -> []
 

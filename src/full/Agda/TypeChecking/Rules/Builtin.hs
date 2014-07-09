@@ -6,7 +6,7 @@ module Agda.TypeChecking.Rules.Builtin (bindBuiltin, bindPostulatedName) where
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Data.List (find)
 
 import qualified Agda.Syntax.Abstract as A

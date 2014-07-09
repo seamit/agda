@@ -29,7 +29,7 @@ module Agda.Interaction.Options
     ) where
 
 import Control.Monad            ( when )
-import Control.Monad.Error	( MonadError(..) )
+import Control.Monad.Except 	( MonadError(..) )
 import Data.Maybe               ( isJust )
 import Data.List		( isSuffixOf , intercalate )
 import System.Console.GetOpt	( getOpt, usageInfo, ArgOrder(ReturnInOrder)

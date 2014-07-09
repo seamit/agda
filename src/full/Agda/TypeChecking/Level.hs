@@ -2,7 +2,7 @@
 
 module Agda.TypeChecking.Level where
 
-import Control.Monad.Error
+import Control.Monad.Error.Class
 import Control.Applicative
 import Data.List as List
 

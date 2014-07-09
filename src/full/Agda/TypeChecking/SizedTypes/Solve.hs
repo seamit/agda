@@ -56,7 +56,8 @@
 
 module Agda.TypeChecking.SizedTypes.Solve where
 
-import Control.Monad.Error
+import Control.Monad
+import Control.Monad.Error.Class
 
 import Data.Foldable (Foldable, foldMap)
 import Data.Function

@@ -12,7 +12,7 @@ module Agda.TypeChecking.Errors
     ) where
 
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Error.Class
 
 import Data.Function
 import Data.List (nub, sortBy)

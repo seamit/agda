@@ -7,7 +7,7 @@ import Data.IORef
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Control.Monad.State
-import Control.Monad.Error
+import Control.Monad.Except
 
 import qualified Agda.Syntax.Internal as I
 import qualified Agda.Syntax.Common as C
@@ -296,7 +296,7 @@ tomyPat p = case C.unArg p of
   cc <- lift $ liftIO $ readIORef c
   let Just npar = fst $ cdorigin cc
   return $ PatConApp c (replicate npar PatExp ++ pats')
- I.LitP _ -> throwError $ strMsg "Auto: Literals in patterns are not supported"
+ I.LitP _ -> throwError . MB.Exception SP.noRange  $ "Auto: Literals in patterns are not supported"
 
 tomyBody (I.Body t) = do
  t <- lift $ norm t
@@ -365,7 +365,7 @@ tomyExp v0 =
     t@I.Lit{} -> do
       t <- lift $ constructorForm t
       case t of
-        I.Lit{} -> throwError $ strMsg "Auto: Literals in terms are not supported"
+        I.Lit{} -> throwError . MB.Exception SP.noRange $ "Auto: Literals in terms are not supported"
         _       -> tomyExp t
     I.Level l -> tomyExp =<< lift (reallyUnLevelView l)
     I.Def name es -> do
@@ -463,12 +463,12 @@ icnvh h = (C.setHiding h' C.defaultArgInfo)
 
 frommy = frommyExp
 
-frommyType :: MExp O -> ErrorT String IO I.Type
+frommyType :: MExp O -> ExceptT String IO I.Type
 frommyType e = do
  e' <- frommyExp e
  return $ I.El (I.mkType 0) e'  -- 0 is arbitrary, sort not read by Agda when reifying
 
-frommyExp :: MExp O -> ErrorT String IO I.Term
+frommyExp :: MExp O -> ExceptT String IO I.Term
 frommyExp (Meta m) = do
  bind <- lift $ readIORef $ mbind m
  case bind of
@@ -508,7 +508,7 @@ frommyExp (NotM e) =
    return $ I.Lam (icnvh hid) (I.Abs abslamvarname (I.Var 0 []))
 
 
-frommyExps :: Nat -> MArgList O -> I.Term -> ErrorT String IO I.Term
+frommyExps :: Nat -> MArgList O -> I.Term -> ExceptT String IO I.Term
 frommyExps ndrop (Meta m) trm = do
  bind <- lift $ readIORef $ mbind m
  case bind of
@@ -593,7 +593,7 @@ constructPats cmap mainm clause = do
  return (reverse names, pats)
 
 
-frommyClause :: (CSCtx O, [CSPat O], Maybe (MExp O)) -> ErrorT String IO I.Clause
+frommyClause :: (CSCtx O, [CSPat O], Maybe (MExp O)) -> ExceptT String IO I.Clause
 frommyClause (ids, pats, mrhs) = do
  let ctel [] = return I.EmptyTel
      ctel (HI hid (mid, t) : ctx) = do

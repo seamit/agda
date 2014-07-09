@@ -3,7 +3,7 @@
 
 module Agda.TypeChecking.SizedTypes where
 
-import Control.Monad.Error
+import Control.Monad.Error.Class
 
 import Data.Function
 import Data.List
